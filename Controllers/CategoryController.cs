@@ -95,7 +95,7 @@ namespace Spatial_Inventory.Server.Controllers
         {
             if (category == null || category.category_id == 0)
             {
-                return BadRequest("Invalid category data.");
+                return BadRequest("Invalid category Id.");
             }
 
             var existingCategory = await _context.Categories.FindAsync(category.category_id);
