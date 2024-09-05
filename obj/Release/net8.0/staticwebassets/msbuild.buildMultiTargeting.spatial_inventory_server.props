@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\spatial_inventory_server.props" />
+</Project>
