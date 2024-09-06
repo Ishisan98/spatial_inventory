@@ -27,13 +27,39 @@ namespace Spatial_Inventory.Server.Controllers
         }
 
 
+        //// get all active categories (without using DTO)
+        //[HttpGet("active-categories")]
+        //public async Task<ActionResult<IEnumerable<Category>>> GetAllActiveCategories()
+        //{
+        //    var activeCategories = await _context.Categories
+        //                                 .Where(c => c.status == "Active")
+        //                                 .Select(c => new
+        //                                 {
+        //                                     c.category_id,
+        //                                     c.category_name,
+        //                                     c.description,
+        //                                     c.status
+        //                                 })
+        //                                 .ToListAsync();
+
+        //    return Ok(activeCategories);
+        //}
+
+
         // get all active categories
         [HttpGet("active-categories")]
         public async Task<ActionResult<IEnumerable<Category>>> GetAllActiveCategories()
         {
             var activeCategories = await _context.Categories
-                                     .Where(c => c.status == "Active")
-                                     .ToListAsync();
+                                         .Where(c => c.status == "Active")
+                                         .Select(c => new
+                                         {
+                                             c.category_id,
+                                             c.category_name,
+                                             c.description,
+                                             c.status
+                                         })
+                                         .ToListAsync();
 
             return Ok(activeCategories);
         }

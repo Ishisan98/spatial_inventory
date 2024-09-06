@@ -134,3 +134,4 @@ C:\Users\ishis\OneDrive\Desktop\Projects\Spatial_Inventory\spatial_inventory_ser
 C:\Users\ishis\OneDrive\Desktop\Projects\Spatial_Inventory\spatial_inventory_server\obj\Debug\net8.0\spatial_inventory_server.pdb
 C:\Users\ishis\OneDrive\Desktop\Projects\Spatial_Inventory\spatial_inventory_server\obj\Debug\net8.0\spatial_inventory_server.genruntimeconfig.cache
 C:\Users\ishis\OneDrive\Desktop\Projects\Spatial_Inventory\spatial_inventory_server\obj\Debug\net8.0\ref\spatial_inventory_server.dll
+C:\Users\ishis\OneDrive\Desktop\Projects\Spatial_Inventory\spatial_inventory_server\obj\Debug\net8.0\spatial_inventory_server.sourcelink.json

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("spatial_inventory_server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bdfd4a3aaa67a8b08d2932f69ce87a437d1f8b7f")]
 [assembly: System.Reflection.AssemblyProductAttribute("spatial_inventory_server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("spatial_inventory_server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

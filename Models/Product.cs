@@ -13,13 +13,15 @@
         [Required]
         public string product_name { get; set; } = string.Empty;
 
-        public string? description { get; set; } 
+        public string? description { get; set; }
 
         public string? measuring_unit { get; set; } 
 
-        public double quantity { get; set; } = 0;
+        public double quantity { get; set; } = 0.0;
 
-        public double price { get; set; } = 0;
+        public double min_quantity { get; set; } = 0.0;
+
+        public double price { get; set; } = 0.0;
 
         public string status { get; set; } = "Active";
 
