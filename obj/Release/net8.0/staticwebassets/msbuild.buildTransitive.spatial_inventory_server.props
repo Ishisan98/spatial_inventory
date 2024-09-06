@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\spatial_inventory_server.props" />
-</Project>

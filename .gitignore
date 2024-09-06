@@ -1,1 +1,8 @@
 .vs/
+
+# Ignore build output directories and files
+bin/
+obj/
+
+# Ignore user-specific files
+*.pubxml.user
