@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spatial_inventory_server.Data;
+using spatial_inventory_server.Dto;
 using spatial_inventory_server.Models;
 
 
@@ -21,45 +22,44 @@ namespace Spatial_Inventory.Server.Controllers
 
         // get all categories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetAllCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllCategories()
         {
-            return await _context.Categories.ToListAsync();
+            var categories = await _context.Categories
+                            .Select(c => new CategoryDto
+                            {
+                                CategoryId = c.category_id,
+                                CategoryName = c.category_name,
+                                Description = c.description,
+                                Status = c.status,
+                                CreatedDate = c.created_date,
+                                CreatedBy = c.created_by,
+                                ModifiedDate = c.modified_date,
+                                ModifiedBy = c.modified_by
+                            })
+                            .ToListAsync();
+
+            return Ok(categories);
         }
-
-
-        //// get all active categories (without using DTO)
-        //[HttpGet("active-categories")]
-        //public async Task<ActionResult<IEnumerable<Category>>> GetAllActiveCategories()
-        //{
-        //    var activeCategories = await _context.Categories
-        //                                 .Where(c => c.status == "Active")
-        //                                 .Select(c => new
-        //                                 {
-        //                                     c.category_id,
-        //                                     c.category_name,
-        //                                     c.description,
-        //                                     c.status
-        //                                 })
-        //                                 .ToListAsync();
-
-        //    return Ok(activeCategories);
-        //}
 
 
         // get all active categories
         [HttpGet("active-categories")]
-        public async Task<ActionResult<IEnumerable<Category>>> GetAllActiveCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllActiveCategories()
         {
             var activeCategories = await _context.Categories
-                                         .Where(c => c.status == "Active")
-                                         .Select(c => new
-                                         {
-                                             c.category_id,
-                                             c.category_name,
-                                             c.description,
-                                             c.status
-                                         })
-                                         .ToListAsync();
+                            .Where(c => c.status == "Active")
+                            .Select(c => new CategoryDto
+                            {
+                                CategoryId = c.category_id,         
+                                CategoryName = c.category_name,     
+                                Description = c.description,      
+                                Status = c.status,                 
+                                CreatedDate = c.created_date,     
+                                CreatedBy = c.created_by,
+                                ModifiedDate = c.modified_date,
+                                ModifiedBy = c.modified_by
+                            })
+                            .ToListAsync();
 
             return Ok(activeCategories);
         }
@@ -67,76 +67,117 @@ namespace Spatial_Inventory.Server.Controllers
 
         // get a category by ID
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategoryById(int id)
+        public async Task<ActionResult<CategoryDto>> GetCategoryById(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == id);
+
             if (category == null)
             {
                 return NotFound();
             }
-            return category;
+
+            var categoryDto = new CategoryDto
+            {
+                CategoryId = category.category_id,
+                CategoryName = category.category_name,
+                Description = category.description,
+                Status = category.status,
+                CreatedDate = category.created_date,
+                CreatedBy = category.created_by,
+                ModifiedDate = category.modified_date,
+                ModifiedBy = category.modified_by
+            };
+
+            return Ok(categoryDto);
         }
 
 
         // create a new category
         [HttpPost]
-        public async Task<ActionResult<Category>> CreateCategory(Category category)
+        public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto categoryDto)
         {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            var category = new Category
+            {
+                category_name = categoryDto.CategoryName,
+                description = categoryDto.Description,
+                created_by = categoryDto.CreatedBy,
+                created_date = DateTime.Now
+            };
+            try
+            {
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCategoryById), new { id = category.category_id }, category);
+                return Ok(category.category_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         // update category
         [HttpPut]
-        public async Task<ActionResult<Category>> UpdateCategory(Category category)
+        public async Task<ActionResult<CategoryDto>> UpdateCategory(CategoryDto categoryDto)
         {
-            if (category == null || category.category_id == 0)
+            if (categoryDto == null || categoryDto.CategoryId == 0)
             {
                 return BadRequest("Invalid category data.");
             }
 
-            var existingCategory = await _context.Categories.FindAsync(category.category_id);
+            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == categoryDto.CategoryId);
             if (existingCategory == null)
             {
-                return NotFound($"Category with ID {category.category_id} not found.");
+                return NotFound($"Category with ID {categoryDto.CategoryId} not found.");
             }
 
-            existingCategory.category_name = category.category_name;
-            existingCategory.description = category.description;
-            existingCategory.modified_by = category.modified_by;
+            existingCategory.category_name = categoryDto.CategoryName;
+            existingCategory.description = categoryDto.Description;
+            existingCategory.modified_by = categoryDto.ModifiedBy;
             existingCategory.modified_date = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-
-            return Ok(existingCategory);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(existingCategory.category_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         // deactivate category
-        [HttpPut]
-        public async Task<ActionResult<Category>> DeactivateCategory(Category category)
+        [HttpPut("deactivate-category")]
+        public async Task<ActionResult<CategoryDto>> DeactivateCategory(CategoryDto categoryDto)
         {
-            if (category == null || category.category_id == 0)
+            if (categoryDto == null || categoryDto.CategoryId == 0)
             {
-                return BadRequest("Invalid category Id.");
+                return BadRequest("Invalid category data.");
             }
 
-            var existingCategory = await _context.Categories.FindAsync(category.category_id);
+            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == categoryDto.CategoryId);
             if (existingCategory == null)
             {
-                return NotFound($"Category with ID {category.category_id} not found.");
+                return NotFound($"Category with ID {categoryDto.CategoryId} not found.");
             }
 
             existingCategory.status = "Inactive";
-            existingCategory.modified_by = category.modified_by;
+            existingCategory.modified_by = categoryDto.ModifiedBy;
             existingCategory.modified_date = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-
-            return Ok(existingCategory);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(existingCategory.category_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }        
         }
+
     }
 }
