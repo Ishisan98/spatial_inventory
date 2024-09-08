@@ -12,8 +12,8 @@ using spatial_inventory_server.Data;
 namespace spatial_inventory_server.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    [Migration("20240905162455_UpdatedProduct")]
-    partial class UpdatedProduct
+    [Migration("20240908135517_Initial Create")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,7 +57,12 @@ namespace spatial_inventory_server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("userId")
+                        .HasColumnType("int");
+
                     b.HasKey("category_id");
+
+                    b.HasIndex("userId");
 
                     b.ToTable("category");
                 });
@@ -70,10 +75,7 @@ namespace spatial_inventory_server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("product_id"));
 
-                    b.Property<int>("category_id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("category_id1")
+                    b.Property<int>("categoryId")
                         .HasColumnType("int");
 
                     b.Property<string>("created_by")
@@ -86,18 +88,20 @@ namespace spatial_inventory_server.Migrations
                     b.Property<string>("description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("location")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("measuring_unit")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double>("min_quantity")
+                        .HasColumnType("float");
+
                     b.Property<string>("modified_by")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("modified_date")
                         .HasColumnType("datetime2");
-
-                    b.Property<double>("price")
-                        .HasColumnType("float");
 
                     b.Property<string>("product_name")
                         .IsRequired()
@@ -110,26 +114,123 @@ namespace spatial_inventory_server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double>("unit_price")
+                        .HasColumnType("float");
+
+                    b.Property<int>("userId")
+                        .HasColumnType("int");
+
                     b.HasKey("product_id");
 
-                    b.HasIndex("category_id1");
+                    b.HasIndex("categoryId");
+
+                    b.HasIndex("userId");
 
                     b.ToTable("product");
+                });
+
+            modelBuilder.Entity("spatial_inventory_server.Models.User", b =>
+                {
+                    b.Property<int>("user_id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("user_id"));
+
+                    b.Property<string>("contact_no")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("country_code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("created_date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("date_of_birth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("display_name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("first_name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("gender")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("last_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("modified_date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("profile_picture")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("surname")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("user_id");
+
+                    b.ToTable("user");
+                });
+
+            modelBuilder.Entity("spatial_inventory_server.Models.Category", b =>
+                {
+                    b.HasOne("spatial_inventory_server.Models.User", "User")
+                        .WithMany("Categories")
+                        .HasForeignKey("userId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("spatial_inventory_server.Models.Product", b =>
                 {
                     b.HasOne("spatial_inventory_server.Models.Category", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("category_id1")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("categoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("spatial_inventory_server.Models.User", "User")
+                        .WithMany("Products")
+                        .HasForeignKey("userId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("spatial_inventory_server.Models.Category", b =>
                 {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("spatial_inventory_server.Models.User", b =>
+                {
+                    b.Navigation("Categories");
+
                     b.Navigation("Products");
                 });
 #pragma warning restore 612, 618

@@ -19,5 +19,8 @@
         public string? modified_by { get; set; } = string.Empty.ToString();
 
         public ICollection<Product> Products { get; set; } = new List<Product>();
+
+        public int userId { get; set; }
+        public User User { get; set; } = null!;
     }
 }

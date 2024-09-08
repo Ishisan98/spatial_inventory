@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spatial_inventory_server.Data;
-using spatial_inventory_server.Dto;
 using spatial_inventory_server.Models;
+using spatial_inventory_server.Dto;
 
 
 namespace Spatial_Inventory.Server.Controllers
@@ -96,7 +96,7 @@ namespace Spatial_Inventory.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto categoryDto)
         {
-            var category = new Category
+            var newCategory = new Category
             {
                 category_name = categoryDto.CategoryName,
                 description = categoryDto.Description,
@@ -105,10 +105,9 @@ namespace Spatial_Inventory.Server.Controllers
             };
             try
             {
-                _context.Categories.Add(category);
+                _context.Categories.Add(newCategory);
                 await _context.SaveChangesAsync();
-
-                return Ok(category.category_id);
+                return Ok(newCategory.category_id);
             }
             catch (Exception ex)
             {

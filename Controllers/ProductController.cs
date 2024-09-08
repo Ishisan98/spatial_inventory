@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using spatial_inventory_server.Data;
 using spatial_inventory_server.Models;
+using spatial_inventory_server.Dto;
 
 
 namespace spatial_inventory_server.Controllers
@@ -20,19 +21,54 @@ namespace spatial_inventory_server.Controllers
 
         // get all products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts()
         {
-            return await _context.Products.ToListAsync();
+            var products = await _context.Products
+                .Select(p => new ProductDto
+                {
+                    ProductId = p.product_id,
+                    ProductName = p.product_name,
+                    Description = p.description,
+                    MeasuringUnit = p.measuring_unit,
+                    Quantity = p.quantity,
+                    MinQuantity = p.min_quantity,
+                    Price = p.unit_price,
+                    CategoryId = p.categoryId,
+                    Status = p.status,
+                    CreatedDate = p.created_date,
+                    CreatedBy = p.created_by,
+                    ModifiedDate = p.modified_date,
+                    ModifiedBy = p.modified_by
+                })
+                .ToListAsync();
+
+            return Ok(products);
         }
 
 
         // get all active products
         [HttpGet("active-products")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetAllActiveProducts()
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllActiveProducts()
         {
             var activeProducts = await _context.Products
-                                     .Where(p => p.status == "Active")
-                                     .ToListAsync();
+                .Where(p => p.status == "Active")
+                .Select(p => new ProductDto
+                {
+                    ProductId = p.product_id,
+                    ProductName = p.product_name,
+                    Description = p.description,
+                    MeasuringUnit = p.measuring_unit,
+                    Quantity = p.quantity,
+                    MinQuantity = p.min_quantity,
+                    Price = p.unit_price,
+                    CategoryId = p.categoryId,
+                    Status = p.status,
+                    CreatedDate = p.created_date,
+                    CreatedBy = p.created_by,
+                    ModifiedDate = p.modified_date,
+                    ModifiedBy = p.modified_by
+                })
+                .ToListAsync();
 
             return Ok(activeProducts);
         }
@@ -40,97 +76,158 @@ namespace spatial_inventory_server.Controllers
 
         // get a product by ID
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetProductById(int id)
+        public async Task<ActionResult<ProductDto>> GetProductById(int id)
         {
-            var product = await _context.Categories.FindAsync(id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.product_id == id);
+
             if (product == null)
             {
                 return NotFound();
             }
-            return product;
+
+            var productDto = new ProductDto
+            {
+                ProductId = product.product_id,
+                ProductName = product.product_name,
+                Description = product.description,
+                MeasuringUnit = product.measuring_unit,
+                Quantity = product.quantity,
+                MinQuantity = product.min_quantity,
+                Price = product.unit_price,
+                CategoryId = product.categoryId,
+                Status = product.status,
+                CreatedDate = product.created_date,
+                CreatedBy = product.created_by,
+                ModifiedDate = product.modified_date,
+                ModifiedBy = product.modified_by
+            };
+
+            return Ok(productDto);
         }
 
 
         // get a product by Category ID
         [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult<List<Product>>> GetProductsByCategoryId(int categoryId)
+        public async Task<ActionResult<List<ProductDto>>> GetProductsByCategoryId(int categoryId)
         {
-            var products = await _context.Products
-                                         .Where(p => p.category_id == categoryId)
-                                         .ToListAsync();
+            var activeProducts = await _context.Products
+               .Where(p => p.categoryId == categoryId)
+               .Select(p => new ProductDto
+               {
+                   ProductId = p.product_id,
+                   ProductName = p.product_name,
+                   Description = p.description,
+                   MeasuringUnit = p.measuring_unit,
+                   Quantity = p.quantity,
+                   MinQuantity = p.min_quantity,
+                   Price = p.unit_price,
+                   CategoryId = p.categoryId,
+                   Status = p.status,
+                   CreatedDate = p.created_date,
+                   CreatedBy = p.created_by,
+                   ModifiedDate = p.modified_date,
+                   ModifiedBy = p.modified_by
+               })
+               .ToListAsync();
 
-            if (products == null || !products.Any())
-            {
-                return NotFound();
-            }
-
-            return products;
+            return Ok(activeProducts);
         }
 
 
         // create a new product
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        public async Task<ActionResult<ProductDto>> CreateProduct(ProductDto productDto)
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProductById), new { id = product.product_id }, product);
+            var newProduct = new Product
+            {
+                product_name = productDto.ProductName,
+                description = productDto.Description,
+                measuring_unit = productDto.MeasuringUnit,
+                quantity = productDto.Quantity,
+                min_quantity = productDto.MinQuantity,
+                unit_price = productDto.Price,
+                categoryId = productDto.CategoryId
+            };
+            try
+            {
+                _context.Products.Add(newProduct);
+                await _context.SaveChangesAsync();
+                return Ok(newProduct.product_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message, details = ex.InnerException?.Message });
+            }
         }
 
 
         // update product
         [HttpPut]
-        public async Task<ActionResult<Product>> UpdateProduct(Product product)
+        public async Task<ActionResult<ProductDto>> UpdateProduct(ProductDto productDto)
         {
-            if (product == null || product.product_id == 0)
+            if (productDto == null || productDto.ProductId == 0)
             {
                 return BadRequest("Invalid product data.");
             }
 
-            var existingProduct = await _context.Products.FindAsync(product.product_id);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId);
             if (existingProduct == null)
             {
-                return NotFound($"Product with ID {product.product_id} not found.");
+                return NotFound($"Product with ID {productDto.ProductId} not found.");
             }
 
-            existingProduct.product_name = product.product_name;
-            existingProduct.description = product.description;
-            existingProduct.price = product.price;
-            existingProduct.measuring_unit = product.measuring_unit;
-            existingProduct.quantity = product.quantity;
-            existingProduct.category_id = product.category_id;
-            existingProduct.modified_by = product.modified_by;
+            existingProduct.product_name = productDto.ProductName;
+            existingProduct.description = productDto.Description;
+            existingProduct.measuring_unit = productDto.MeasuringUnit;
+            existingProduct.quantity = productDto.Quantity;
+            existingProduct.min_quantity = productDto.MinQuantity;
+            existingProduct.unit_price = productDto.Price;
+            existingProduct.categoryId = productDto.CategoryId;
+            existingProduct.description = productDto.Description;
+            existingProduct.modified_by = productDto.ModifiedBy;
             existingProduct.modified_date = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-
-            return Ok(existingProduct);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(existingProduct.product_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         // deactivate product
         [HttpPut]
-        public async Task<ActionResult<Product>> DeactivateProduct(Product product)
+        public async Task<ActionResult<ProductDto>> DeactivateProduct(ProductDto productDto)
         {
-            if (product == null || product.product_id == 0)
+            if (productDto == null || productDto.ProductId == 0)
             {
-                return BadRequest("Invalid product Id.");
+                return BadRequest("Invalid product data.");
             }
 
-            var existingProduct = await _context.Products.FindAsync(product.product_id);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId);
             if (existingProduct == null)
             {
-                return NotFound($"Product with ID {product.product_id} not found.");
+                return NotFound($"Product with ID {productDto.ProductId} not found.");
             }
 
             existingProduct.status = "Inactive";
-            existingProduct.modified_by = product.modified_by;
+            existingProduct.modified_by = productDto.ModifiedBy;
             existingProduct.modified_date = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-
-            return Ok(existingProduct);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(existingProduct.product_id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
+
     }
 }
