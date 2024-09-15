@@ -10,5 +10,7 @@
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedDate { get; set; }
         public string? ModifiedBy { get; set; }
+
+        public int UserId { get; set; }
     }
 }

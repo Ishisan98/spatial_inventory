@@ -14,6 +14,8 @@
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedDate { get; set; }
         public string? ModifiedBy { get; set; } = string.Empty;
-        public int CategoryId { get; set; }       
+        public int CategoryId { get; set; }     
+        
+        public int UserId { get; set; }
     }
 }

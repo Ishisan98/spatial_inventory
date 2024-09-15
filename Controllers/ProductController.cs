@@ -20,10 +20,11 @@ namespace spatial_inventory_server.Controllers
 
 
         // get all products
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts()
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts(int userId)
         {
             var products = await _context.Products
+                .Where(p => p.userId == userId)
                 .Select(p => new ProductDto
                 {
                     ProductId = p.product_id,
@@ -35,6 +36,7 @@ namespace spatial_inventory_server.Controllers
                     Price = p.unit_price,
                     CategoryId = p.categoryId,
                     Status = p.status,
+                    UserId = p.userId,
                     CreatedDate = p.created_date,
                     CreatedBy = p.created_by,
                     ModifiedDate = p.modified_date,
@@ -47,11 +49,11 @@ namespace spatial_inventory_server.Controllers
 
 
         // get all active products
-        [HttpGet("active-products")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllActiveProducts()
+        [HttpGet("active-products/{userId}")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllActiveProducts(int userId)
         {
             var activeProducts = await _context.Products
-                .Where(p => p.status == "Active")
+                .Where(p => p.status == "Active" && p.userId == userId)
                 .Select(p => new ProductDto
                 {
                     ProductId = p.product_id,
@@ -63,6 +65,7 @@ namespace spatial_inventory_server.Controllers
                     Price = p.unit_price,
                     CategoryId = p.categoryId,
                     Status = p.status,
+                    UserId = p.userId,
                     CreatedDate = p.created_date,
                     CreatedBy = p.created_by,
                     ModifiedDate = p.modified_date,
@@ -75,31 +78,32 @@ namespace spatial_inventory_server.Controllers
 
 
         // get a product by ID
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ProductDto>> GetProductById(int id)
+        [HttpGet("productById")]
+        public async Task<ActionResult<ProductDto>> GetProductById(ProductDto product)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.product_id == id);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == product.ProductId && p.userId == product.UserId);
 
-            if (product == null)
+            if (existingProduct == null)
             {
                 return NotFound();
             }
 
             var productDto = new ProductDto
             {
-                ProductId = product.product_id,
-                ProductName = product.product_name,
-                Description = product.description,
-                MeasuringUnit = product.measuring_unit,
-                Quantity = product.quantity,
-                MinQuantity = product.min_quantity,
-                Price = product.unit_price,
-                CategoryId = product.categoryId,
-                Status = product.status,
-                CreatedDate = product.created_date,
-                CreatedBy = product.created_by,
-                ModifiedDate = product.modified_date,
-                ModifiedBy = product.modified_by
+                ProductId = existingProduct.product_id,
+                ProductName = existingProduct.product_name,
+                Description = existingProduct.description,
+                MeasuringUnit = existingProduct.measuring_unit,
+                Quantity = existingProduct.quantity,
+                MinQuantity = existingProduct.min_quantity,
+                Price = existingProduct.unit_price,
+                CategoryId = existingProduct.categoryId,
+                Status = existingProduct.status,
+                UserId = existingProduct.userId,
+                CreatedDate = existingProduct.created_date,
+                CreatedBy = existingProduct.created_by,
+                ModifiedDate = existingProduct.modified_date,
+                ModifiedBy = existingProduct.modified_by
             };
 
             return Ok(productDto);
@@ -107,11 +111,11 @@ namespace spatial_inventory_server.Controllers
 
 
         // get a product by Category ID
-        [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult<List<ProductDto>>> GetProductsByCategoryId(int categoryId)
+        [HttpGet("productByCategory")]
+        public async Task<ActionResult<List<ProductDto>>> GetProductsByCategoryId(CategoryDto category)
         {
             var activeProducts = await _context.Products
-               .Where(p => p.categoryId == categoryId)
+               .Where(p => p.categoryId == category.CategoryId && p.userId == category.UserId)
                .Select(p => new ProductDto
                {
                    ProductId = p.product_id,
@@ -123,6 +127,7 @@ namespace spatial_inventory_server.Controllers
                    Price = p.unit_price,
                    CategoryId = p.categoryId,
                    Status = p.status,
+                   UserId = p.userId,
                    CreatedDate = p.created_date,
                    CreatedBy = p.created_by,
                    ModifiedDate = p.modified_date,
@@ -146,7 +151,8 @@ namespace spatial_inventory_server.Controllers
                 quantity = productDto.Quantity,
                 min_quantity = productDto.MinQuantity,
                 unit_price = productDto.Price,
-                categoryId = productDto.CategoryId
+                categoryId = productDto.CategoryId,
+                userId = productDto.UserId
             };
             try
             {
@@ -170,10 +176,10 @@ namespace spatial_inventory_server.Controllers
                 return BadRequest("Invalid product data.");
             }
 
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId && p.userId == productDto.UserId);
             if (existingProduct == null)
             {
-                return NotFound($"Product with ID {productDto.ProductId} not found.");
+                return NotFound($"Product not found.");
             }
 
             existingProduct.product_name = productDto.ProductName;
@@ -200,7 +206,7 @@ namespace spatial_inventory_server.Controllers
 
 
         // deactivate product
-        [HttpPut]
+        [HttpPut("deactivate-product")]
         public async Task<ActionResult<ProductDto>> DeactivateProduct(ProductDto productDto)
         {
             if (productDto == null || productDto.ProductId == 0)
@@ -208,7 +214,7 @@ namespace spatial_inventory_server.Controllers
                 return BadRequest("Invalid product data.");
             }
 
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(p => p.product_id == productDto.ProductId && p.userId == productDto.UserId);
             if (existingProduct == null)
             {
                 return NotFound($"Product with ID {productDto.ProductId} not found.");

@@ -21,10 +21,11 @@ namespace Spatial_Inventory.Server.Controllers
 
 
         // get all categories
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllCategories()
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllCategories(int userId)
         {
             var categories = await _context.Categories
+                            .Where(c => c.userId == userId)
                             .Select(c => new CategoryDto
                             {
                                 CategoryId = c.category_id,
@@ -33,6 +34,7 @@ namespace Spatial_Inventory.Server.Controllers
                                 Status = c.status,
                                 CreatedDate = c.created_date,
                                 CreatedBy = c.created_by,
+                                UserId = c.userId,
                                 ModifiedDate = c.modified_date,
                                 ModifiedBy = c.modified_by
                             })
@@ -43,11 +45,11 @@ namespace Spatial_Inventory.Server.Controllers
 
 
         // get all active categories
-        [HttpGet("active-categories")]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllActiveCategories()
+        [HttpGet("active-categories/{userId}")]
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAllActiveCategories(int userId)
         {
             var activeCategories = await _context.Categories
-                            .Where(c => c.status == "Active")
+                            .Where(c => c.status == "Active" && c.userId == userId)
                             .Select(c => new CategoryDto
                             {
                                 CategoryId = c.category_id,         
@@ -56,6 +58,7 @@ namespace Spatial_Inventory.Server.Controllers
                                 Status = c.status,                 
                                 CreatedDate = c.created_date,     
                                 CreatedBy = c.created_by,
+                                UserId = c.userId,
                                 ModifiedDate = c.modified_date,
                                 ModifiedBy = c.modified_by
                             })
@@ -66,26 +69,27 @@ namespace Spatial_Inventory.Server.Controllers
 
 
         // get a category by ID
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDto>> GetCategoryById(int id)
+        [HttpGet("categoryById")]
+        public async Task<ActionResult<CategoryDto>> GetCategoryById(CategoryDto category)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == id);
+            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == category.CategoryId && c.userId == category.UserId);
 
-            if (category == null)
+            if (existingCategory == null)
             {
                 return NotFound();
             }
 
             var categoryDto = new CategoryDto
             {
-                CategoryId = category.category_id,
-                CategoryName = category.category_name,
-                Description = category.description,
-                Status = category.status,
-                CreatedDate = category.created_date,
-                CreatedBy = category.created_by,
-                ModifiedDate = category.modified_date,
-                ModifiedBy = category.modified_by
+                CategoryId = existingCategory.category_id,
+                CategoryName = existingCategory.category_name,
+                Description = existingCategory.description,
+                Status = existingCategory.status,
+                UserId = existingCategory.userId,
+                CreatedDate = existingCategory.created_date,
+                CreatedBy = existingCategory.created_by,
+                ModifiedDate = existingCategory.modified_date,
+                ModifiedBy = existingCategory.modified_by
             };
 
             return Ok(categoryDto);
@@ -96,10 +100,16 @@ namespace Spatial_Inventory.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto categoryDto)
         {
+            if (categoryDto.UserId == null || categoryDto.UserId == 0)
+            {
+                return BadRequest("Empty User");
+            }
+
             var newCategory = new Category
             {
                 category_name = categoryDto.CategoryName,
                 description = categoryDto.Description,
+                userId = categoryDto.UserId,
                 created_by = categoryDto.CreatedBy,
                 created_date = DateTime.Now
             };
@@ -157,10 +167,10 @@ namespace Spatial_Inventory.Server.Controllers
                 return BadRequest("Invalid category data.");
             }
 
-            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == categoryDto.CategoryId);
+            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.category_id == categoryDto.CategoryId && c.userId == categoryDto.UserId);
             if (existingCategory == null)
             {
-                return NotFound($"Category with ID {categoryDto.CategoryId} not found.");
+                return NotFound($"Category not found.");
             }
 
             existingCategory.status = "Inactive";

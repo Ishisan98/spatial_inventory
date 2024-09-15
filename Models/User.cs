@@ -16,6 +16,8 @@
         [Required] 
         public string password { get; set; } = string.Empty;
 
+        public string hax_password { get; set; } = string.Empty;
+
         [Required] 
         public string email { get; set; } = string.Empty;
 
@@ -37,7 +39,7 @@
         public DateOnly? date_of_birth { get; set; }
         public string? gender { get; set; }
         public string? profile_picture { get; set; }
-
+        public string status { get; set; } = "Active";
         public DateTime created_date { get; set; } = DateTime.Now;
         public DateTime modified_date {  get; set; } = DateTime.Now;
 
